@@ -1,0 +1,90 @@
+{
+Case Background: In December 1819, a criminal prosecution was initiated against James A. Whitesides and others for allegedly participating in a riot in Pope County, Illinois. The key individuals involved were the plaintiffs, Whitesides and his co-defendants, and the People of the State of Illinois as the defendants. The case revolves around the indictment's alleged deficiencies, leading to a legal dispute over the nature of the formal charges against the plaintiffs. The plaintiffs faced three main allegations of error regarding the indictment: a failure to specify the year of the offense, non-compliance with the constitutionally prescribed format, and a lack of clear description of the alleged criminal behavior suggesting a riot.
+
+Plaintiff's Claims: The plaintiffs argued that the indictment was flawed on three grounds: (1) it failed to explicitly state the year of the offense in an unambiguous manner, (2) it did not adhere to the constitutional requirement that indictments be presented "in the name, and by the authority of the people of the state of Illinois," and (3) the charge was too vague and did not sufficiently detail the circumstances of the alleged riot, such as the specific actions that constituted a disturbance of peace.
+
+Defendant's Defenses: The defendants, representing the State of Illinois, maintained that the indictment was sufficient under the law. They contended that the essential elements of a riot had been captured in the indictment, and there was no need for greater specificity about the disturbance alleged. They requested that the court uphold the lower court's judgment against the plaintiffs.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: François Coleen and Abraham Claypole filed a case against Daniel Figgins in the Illinois Supreme Court concerning a void writ issued by the Madison Circuit Court. This legal action arose on March 31, 1819, on the same day that the General Assembly approved the act to create circuit courts. The plaintiffs alleged that the writ issued from the Madison Circuit Court was invalid since the circuit courts' establishment became effective only on April 1, 1819, which meant that the court had no authority to issue the writ and set it for a May term before it formally existed. The case featured critical arguments regarding the legitimacy of process and formal court operations, highlighting procedural intricacies. 
+
+Plaintiff's Claims: The plaintiffs contended that the writ issued by the Madison Circuit Court was void as the circuit court did not officially exist when the writ was created. They argued that no appearance could legitimize the writ, as it was fundamentally flawed. Their legal request was for the reversal of the lower court's decision regarding the validity of the writ.
+
+Defendant's Defenses: Daniel Figgins, the defendant, likely maintained that any irregularity in the process could be cured by the defendant's appearance in court. The defense would argue that despite the timing of the writ's issuance, they were entitled to respond to the action taken against them, suggesting that procedural concerns should not override substantive rights to defend against the claims.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: In July 1820, the case of Joseph Cornelius, Plaintiff in Error, v. Simon Vanorsdall, Assignee of John De Rush, was heard by the Illinois Supreme Court. The background of the case includes the involvement of Joseph Cornelius, who initiated the appeal, and Simon Vanorsdall, who represented the interests of John De Rush as the defendant. The legal dispute arose in St. Clair County, Illinois, related to a plea alleging a failure of consideration. This issue led to a demurrer, which is a formal objection that challenges the legal sufficiency of the opposing party's statements. The lower court sustained the demurrer, leading Cornelius to seek a review of that decision.
+
+Plaintiff's Claims: Joseph Cornelius claimed that the plea alleging a failure of consideration was inadequate as it did not clearly delineate the specific reasons for the failure. He sought to reverse the lower court's judgment that sustained the demurrer, hoping to have the case reconsidered on its merits based on the argument that a lack of specificity in identifying the failure undermined the defense.
+
+Defendant's Defenses: Simon Vanorsdall, as defendant in error, maintained that the plea of failure of consideration was sufficient as submitted. He relied on the precedent set by the previous case of Taylor v. Sprinkle, arguing that the judgment of the lower court should be upheld. Vanorsdall's defense centered around the notion that the objection raised by Cornelius lacked the necessary grounds to overturn the demurrer.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: In December 1819, in Madison, Illinois, a legal case known as Elijah Smith who sues for the use of William Johnson, Appellant, v. William Bridges, Appellee was presented before the Illinois Supreme Court. The case revolves around a dispute over a promissory note. The plaintiff, Elijah Smith, argued that he holds notes related to a financial instrument; however, it lacked any concrete features of a proper note. Specifically, there was no clear engagement or obligation from the defendant, William Bridges, to pay a specific person or entity. The court focused on the definitions and requirements that constitute a valid promissory note, emphasizing that without a name or clear specification for payment, such an instrument cannot be enforced. The ruling led to a reversal of the earlier judgment and a remand to the lower court for further proceedings.
+
+Plaintiff's Claims: The plaintiff, Elijah Smith, claimed that he held notes entitling him to payments. He argued that the instrument involved did not satisfy the legal criteria for a valid promissory note, primarily because it lacked a direct obligation from the defendant to pay any specific individual. Smith sought a judgment that recognized the deficiencies of the instrument and reinstituted proceedings in a manner consistent with the court's findings.
+
+Defendant's Defenses: William Bridges, the defendant, contended that the instrument in question did not qualify as a promissory note according to legal definitions. His defense focused on the absence of an explicit commitment to pay and the failure of the document to demonstrate that it was payable to any person. Bridges requested the court to dismiss the case based on the deficiencies of the instrument, asserting that no valid action could be maintained against him without the requisite terms being present in the writing.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: Jonathan Taylor, the appellant, initiated a legal action against Michael Sprinkle, the appellee, in the year 1819 in Gallatin, Illinois. The nature of the case revolved around a covenant, which is a formal agreement or promise made within a contract. The central issue in the case arose from the fifth plea posed by the defendant claiming that the consideration for the agreement had failed. This plea was met with a demurrer, an objection that asserts that even if the facts presented by the defendant are true, they do not constitute a legal defense. The court accepted this demurrer, thereby focusing the case on the sufficiency of the defendant's plea regarding the alleged failure of consideration. The underlying legal principle established by the court emphasized that special pleas must adequately demonstrate the manner in which a party seeks to avoid their obligation in a contractual agreement. As the defendant failed to do so, the plea was deemed insufficient, leading to the affirmation of the circuit court's original judgment.
+
+Plaintiff's Claims: The plaintiff, Jonathan Taylor, contended that Michael Sprinkle’s plea of failure of consideration was inadequate as it did not specify the manner in which the obligation was avoided. Taylor argued that the demurrer to the plea should be sustained, leading to a request for the court to affirm the validity of the original agreement established in the covenant. Essentially, he sought enforcement of the contract, asserting that without a clear basis for the defendant's claims, the obligation should remain intact.
+
+Defendant's Defenses: Michael Sprinkle, the defendant, argued through his plea that the consideration for the contract had failed, thereby attempting to void the obligation under the covenant. However, he faced the challenge that his plea lacked specificity, as it did not adequately detail how the failure of consideration occurred. The key argument was that the nature of the plea introduced a new remedy in contrast to established common law, which could not be broadly extended without proper substantiation.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: In July 1820, in Illinois, the case "James Mason v. N. Buckmaster" emerged from an action of assumpsit by N. Buckmaster against James Mason regarding a promissory note. The note was originally executed by Mason in favor of Paris Mason and was subsequently assigned to Buckmaster. During the proceedings, Mason raised two objections against Buckmaster's declaration: the lack of "profert" of the note and the absence of an averred consideration for the note. The court rejected these objections, leading to a judgment in favor of Buckmaster. Mason then sought to reverse this decision by filing a writ of error, reinstating the same objections against the court’s ruling. The case was heard in Madison County, Illinois, where the statutory and common law considerations surrounding written instruments were debated.
+
+Plaintiff's Claims: The plaintiff, N. Buckmaster, argued that the objections raised by Mason were unfounded. He contended that there was no need for the profert of the note since it was an assigned note, and that the statute did not require stating a consideration between the maker and assignee. Buckmaster sought a judgment affirming his entitlement to recover on the note assigned to him.
+
+Defendant's Defenses: James Mason, the defendant, contended that the lower court erred by allowing the case to proceed without the necessary profert of the note and without a stated consideration for its execution. He sought to have the earlier judgment overturned, insisting these procedural faults warranted dismissal of the case against him.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: In July 1820, in Randolph County, Illinois, a legal case titled "Thomas Cox, Appellant, v. John McFerron, Appellee" was initiated. The case involved a dispute regarding the foreclosure of a mortgage executed by Thomas Cox in favor of John McFerron. John McFerron commenced an action through a writ of scire facias in the Randolph circuit court to enforce the mortgage. During the proceedings, the court noted that there were two returns of "nihil," indicating that the defendant, Cox, was not found to be personally served. This return led the court to consider whether it was equivalent to actual service of process necessary for the court to have jurisdiction. Ultimately, the court ruled that the return of two nihils sufficed for establishing jurisdiction over the defendant, allowing them to render a judgment for McFerron, confirming the mortgage foreclosure.
+
+Plaintiff's Claims: John McFerron, as the plaintiff, claimed that the mortgage executed by Thomas Cox was in default and sought to enforce the mortgage through the court. His main argument hinged on the effectiveness of the scire facias writ, asserting that the two returns of nihil demonstrated sufficient legal grounds for the court to exercise jurisdiction and grant judgment in his favor.
+
+Defendant's Defenses: Thomas Cox, the defendant, contended that the lack of actual service of the writ through personal delivery should invalidate the proceedings against him. He argued that the return of two nihils was not sufficient to fulfill the legal requirements for the court's jurisdiction to be established, implying that he should have been properly served with the process before any judgment could be entered against him.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+Case Background: On the night of February 9, 1969, in Belleville, Illinois, Danny Tobin, accompanied by Sherri Tobin and three other individuals, was involved in a burglary at the Oliver C. Joseph Automobile Agency. After the group parked nearby, Tobin exited the vehicle, kicked in the agency's door, and later hid inside the building when police arrived. James Muir, a nearby resident, observed their actions and reported them to the police. Upon arrival, law enforcement found Tobin hiding behind an air compressor while the others were discovered in the basement. Evidence indicated that the door was forcibly opened, and Sherri Tobin was found asleep in the vehicle with a loaded firearm. Testimony from a co-defendant suggested that Tobin planned to "make some money" that evening, implying intent to commit theft. Tobin was subsequently convicted of burglary and sentenced to 15 to 25 years in prison.
+
+Plaintiff's Claims: The State of Illinois claimed that Tobin unlawfully entered the automobile agency without proper authority and with the intent to commit theft. They presented evidence such as the forced entry and witness testimony indicating Tobin's actions demonstrated a preparatory intent to burglarize the premises.
+
+Defendant's Defenses: Tobin's defense contended that the State failed to prove he lacked authority to enter the building and did not demonstrate intent to commit theft. They also argued that the court erred in allowing prejudicial testimony regarding firearms and that his sentence was excessively harsh compared to his co-defendants who received lighter sentences.
+
+Court's Final Judgment: Plaintiff wins
+}
+{
+  Case Background: "The case 'Amos Chipps v. Thomas Yancey' dates back to December 1819 and was adjudicated in the Illinois Supreme Court. The context of this case involves a legal action initiated by Amos Chipps against Thomas Yancey, concerning a debt stemming from a judgment that had been rendered in the State of Kentucky. The legal dispute arose when Yancey entered a plea of 'nil debet', which essentially means he denied owing the claimed debt. This plea was met with a demurrer from Chipps, who contested the validity of Yancey’s defense. The lower court upheld Chipps’ demurrer, leading Yancey to appeal or seek a reversal of that decision. The ownership of the case indicates that it is an appeal from a prior ruling and highlights key issues surrounding the validity of pleas related to debts established in other jurisdictions.",
+  
+  Plaintiff's Claims: "Amos Chipps, the plaintiff, contended that the defendant's plea of 'nil debet' was insufficient and invalid in the context of an action for debt based on a judgment obtained in Kentucky. Chipps argued that the lower court correctly sustained his demurrer against this plea, as it is not a permissible defense when debts are grounded in a recorded judgment from another state. He sought affirmation of the lower court's ruling and the obligation of Yancey to pay the debt in question.",
+  
+  Defendant's Defenses: "Thomas Yancey, the defendant, argued through his plea of 'nil debet' that he did not owe the debt as claimed by Chipps. He maintained that this plea should be valid in contesting the action of debt against him. Nevertheless, Yancey appealed the decision of the lower court which had upheld Chipps' demurrer, indicating that he believed the plea was appropriate despite the court's ruling.",
+  
+  Court's Final Judgment: "Plaintiff wins"
+}
+{
+Case Background: In July 1820, in Monroe, Illinois, a legal action was initiated by James S. Beaumont (the appellant) against Yantz (the appellee) over a dispute concerning the wrongful taking of four horses. Yantz claimed that Beaumont had unlawfully taken his property, described in the declaration as "four horses, the property, goods and chattels of the plaintiff, of the value of three hundred dollars." The defendant, Beaumont, raised a demurrer to the declaration on two grounds: first, that the horses were not described with sufficient specificity, and second, that the declaration failed to specify the individual value of each horse. The lower court ruled against Beaumont's demurrer, prompting him to appeal the decision to the Illinois Supreme Court for further review.
+
+Plaintiff's Claims: Yantz asserted that Beaumont wrongfully seized his property, specifically four horses, and demanded restitution for the losses incurred. He contended that the declaration adequately identified the horses in question, emphasizing that stating the number of horses along with their aggregate value was sufficient for the case's legal arguments.
+
+Defendant's Defenses: Beaumont's defense revolved around the assertion that Yantz's declaration was inadequate. He argued that the horses were not sufficiently detailed in description to affirm ownership, claiming that there should be a specific statement about each horse, including its individual value. Beaumont sought to have the case dismissed based on these procedural deficiencies in the plaintiff's claims.
+
+Court's Final Judgment: Plaintiff wins
+}
