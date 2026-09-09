@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+assistant_model/
+Output/*.jsonl
+*.pt
+*.h5

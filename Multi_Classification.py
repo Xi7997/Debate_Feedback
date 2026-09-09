@@ -1,260 +1,206 @@
-import csv
-from openai import OpenAI
+import argparse
+import hashlib
 import json
+import math
 import os
-import tqdm
+from pathlib import Path
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from data_utils import load_task
+from prompts import judge_prompt, debater_prompt, EXCHANGE_PROMPT, FINAL_PROMPT
 
 
-DEBUG = False
+METHODS = {"debate-feedback": "debate-single", "assistant_debate": "debate-assistant"}
 
 
+def parse_json(content):
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    result = json.loads(content)
+    if not isinstance(result, dict):
+        raise ValueError("Model output must be a JSON object")
+    return result
+
+
+def normalize_probabilities(result, labels):
+    probabilities = result["probabilities"]
+    if set(probabilities) != set(labels):
+        raise ValueError("Judge output must contain exactly the allowed labels")
+    values = [float(probabilities[label]) for label in labels]
+    if any(not math.isfinite(x) or x < 0 for x in values) or sum(values) <= 0:
+        raise ValueError("Judge output contains invalid probabilities")
+    total = sum(values)
+    return {label: value / total for label, value in zip(labels, values)}
+
+
+def smooth(previous, current, weight):
+    return {label: (1 - weight) * previous[label] + weight * current[label] for label in previous}
 
 
 class AdversarialAI:
-    def __init__(self, dataset_path, method, model_name, task):
-        self.n = 0
-        self.dataset_path = dataset_path
-        self.case_background = []
-        self.Labels = []
-        self.Outputs = []
-        self.method = method
-        self.model_name = model_name
-        self.Debater = []
-        self.Single_Debate_prompts = []
-        self.prediction = []
-        self.prompt_with_assistant = ""
-        self.Assistant_LLM = False
-        self.classifier = None
-        self.task = task
+    def __init__(self, args, client=None, classifier=None):
+        self.args = args
+        self.data, self.labels = load_task(args.task)
+        self.rows = self.data[args.split]
+        if args.limit:
+            self.rows = self.rows[:args.limit]
+        if client is None:
+            from openai import OpenAI
+            client = OpenAI(max_retries=3, timeout=120)
+        self.client = client
+        self.classifier = classifier
+        self.assistant_lock = threading.Lock()
+        if args.method == "debate-assistant" and classifier is None:
+            from assistant import ReliabilityModel
+            metadata = Path(args.assistant_model) / "training_config.json"
+            if metadata.exists():
+                with metadata.open(encoding="utf-8") as f:
+                    if json.load(f)["task"] != args.task:
+                        raise ValueError("Assistant training task does not match the current task")
+            self.classifier = ReliabilityModel(args.assistant_model)
 
+    def request(self, history, validator):
+        # The SDK retries network errors; retry invalid output structures here.
+        messages = list(history)
+        for attempt in range(3):
+            response = self.client.chat.completions.create(
+                model=self.args.model, messages=messages, temperature=self.args.temperature,
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content or ""
+            try:
+                result = validator(parse_json(content))
+                history.append({"role": "assistant", "content": content})
+                return result
+            except (ValueError, KeyError, TypeError) as error:
+                if attempt == 2:
+                    raise ValueError(f"Failed to parse model output: {error}") from error
+                messages.extend([
+                    {"role": "assistant", "content": content},
+                    {"role": "user", "content": "Invalid output. Follow the required JSON schema and allowed labels exactly."},
+                ])
 
-    def read_dataset(self, ):
-        map = dict()
-        count = 0
-        with open(self.dataset_path, encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                data = json.loads(line)
-                # data : {"key": "value"}
-                self.case_background.append(data["fact"])
-                self.Labels.append(data["relevant_articles"])
-                self.Outputs.append("null")
-                if data["relevant_articles"] not in map:
-                    map[data["relevant_articles"]] = 0
-                map[data["relevant_articles"]] += 1
-                count += 1
-                if count > 12000:
-                    break
+    def judge(self, history):
+        return self.request(history, lambda result: normalize_probabilities(result, self.labels))
 
-        print("Dataset loaded successfully!")
-        print("Number of samples:", len(self.case_background))
-        print("Number of labels:", len(map))
-        self.n = len(self.case_background)
-        self.Debater = list(map.keys())
-        print("Debater:", self.Debater)
+    def debate(self, history):
+        def validate(result):
+            label = str(result["label"])
+            if label not in self.labels or not isinstance(result["opinion"], str) or not result["opinion"].strip():
+                raise ValueError("Invalid expert position or opinion")
+            return {"label": label, "opinion": result["opinion"]}
+        return self.request(history, validate)
 
-
+    def single_debate(self, row):
+        args = self.args
+        judge_history = [
+            {"role": "system", "content": judge_prompt(args.task, self.labels)},
+            {"role": "user", "content": row["text"]},
+        ]
+        initial = self.judge(judge_history)
+        previous = initial
+        rounds = []
+        histories = [[
+            {"role": "system", "content": debater_prompt(args.task, self.labels)},
+            {"role": "user", "content": row["text"]},
+        ] for _ in range(args.debaters or 0)]
+        for i in range(0 if args.method == "zeroshot" else args.rounds):
+            opinions = []
+            for history in histories:
+                if i:
+                    history.append({"role": "user", "content": "Begin the next round. Reconsider the case and state your current view."})
+                opinions.append(self.debate(history))
+            comments = []
+            for j, history in enumerate(histories):
+                others = [dict(expert=k, **opinion) for k, opinion in enumerate(opinions) if k != j]
+                history.append({"role": "user", "content": EXCHANGE_PROMPT + json.dumps(others, ensure_ascii=False)})
+                comments.append(self.debate(history))
+            reliability = None
+            accepted = True
+            if self.classifier is not None:
+                with self.assistant_lock:
+                    reliability = self.classifier.score(row["text"], comments)
+                # Accept the round based on the mean reliability of expert comments.
+                accepted = sum(reliability) / len(reliability) >= args.threshold
+            feedback = {"opinions": opinions, "comments": comments, "reliability": reliability}
+            judge_history.append({"role": "user", "content": FINAL_PROMPT + json.dumps(feedback, ensure_ascii=False)})
+            current = self.judge(judge_history)
+            # Fall back to the initial prediction on low reliability; otherwise apply exponential smoothing.
+            previous = smooth(previous, current, args.smoothing) if accepted else dict(initial)
+            rounds.append(dict(round=i + 1, **feedback, accepted=accepted,
+                               judge_probabilities=current, smoothed_probabilities=previous))
+        return dict(row, status="ok", initial_probabilities=initial,
+                    initial_prediction=max(initial, key=initial.get), rounds=rounds,
+                    prediction=max(previous, key=previous.get), probabilities=previous)
 
     def run(self):
-        if self.method == "zeroshot":
-            self.zeroshot(self.model_name, self.method)
-        elif self.method == "test":
-            self.test(self.model_name, self.method)
-        elif self.method == "debate-feedback":
-            self.run_debate(self.model_name, self.method)
-        elif self.method == "assistant_debate":
-            self.assistant_debate(self.model_name, self.method)
-        else:
-            print("Method not implemented")
-
-    def test(self, model_name, method):
-        self.zeroshot(model_name, method)
-
-    def single_debate(self, model_name, method, idx):
-        client = OpenAI()
-        initial_prompt = (f"Here is a legal case, your task is to predict its relevant law article, the labels can be"
-                  f"one of the following: {self.Debater}. \n"
-                  f"These labels represent the Criminal Law of the People's Republic of China. \n"
-                  f"ONLY output the one of the labels without anything else.\n"
-                  f"Here is the case background:\n")
-        Debater_prompt = (f"Here is a legal case, your task is to predict its relevant law article and Debate with"
-                          f"other experts, the labels can be one of the following: {self.Debater}. \n"
-                          f"These labels represent the Criminal Law of the People's Republic of China. \n"
-                          f"Please state your opinion and refer to factual examples whenever possible.\n"
-                          f"Your answer no more than 200 words.\n"
-                          f"Here is the case background:\n"
-                          )
-        Exchange_prompt = (f"Now I will give you the opinion of another expert, "
-                           f"if their opinions differ from yours, you can support their views or offer a counter-argument.\n"
-                           f"This round of conversation will be provided to the judge for reference, so remember to express your stance clearly.\n"
-                           f"Your answer no more than 200 words.\n"
-                           f"Here is their opinion:\n"
-                           )
-        final_prompt = (f"Some experts discussed the case in this round and here is the summary, please provide your final opinion.\n"
-                        f"Same as above, ONLY output the one of the labels without anything else.\n"
-                        f"Here is the debate summary:\n"
-                        )
-        judge_conversation_history = []
-
-        judge_conversation_history.append({"role": "user", "content": initial_prompt+self.case_background[idx]})
-        responses = client.chat.completions.create(
-            messages=judge_conversation_history,
-            model=model_name,
-        )
-
-        initial_predict = responses.choices[0].message.content
-        judge_conversation_history.append({"role": "system", "content": initial_predict})
-
-        Debate_round = 1
-        Number_of_Debater = 2
-        Debater_conversation_history = [[] for _ in range(Number_of_Debater)]
-
-        final_predict = ""
-        for i in range(Debate_round):
-            Debater_opinion = [""] * Number_of_Debater
-            for j in range(Number_of_Debater):
-                Debater_conversation_history[j].append({"role": "user", "content": Debater_prompt+self.case_background[idx]})
-                responses = client.chat.completions.create(
-                    messages=Debater_conversation_history[j],
-                    model=model_name,
-                )
-                initial_predict = responses.choices[0].message.content
-                Debater_conversation_history[j].append({"role": "system", "content": initial_predict})
-                Debater_opinion[j] = initial_predict
-            Debater_comment = [""] * Number_of_Debater
-            # print("i am here!")
-            for j in range(Number_of_Debater):
-                for k in range(Number_of_Debater):
-                    if j != k:
-                        Debater_conversation_history[j].append({"role": "user", "content": Exchange_prompt+Debater_opinion[k]+f"This is the opinion of the {k}-th expert."})
-                        responses = client.chat.completions.create(
-                            messages=Debater_conversation_history[j],
-                            model=model_name,
-                        )
-                        response = responses.choices[0].message.content
-                        Debater_conversation_history[j].append({"role": "system", "content": response})
-                        Debater_comment[j] = initial_predict
-            summary_of_debate = [issue for issue in Debater_comment]
-            summary_of_debate = str(summary_of_debate)
-            # print("Debater history:", Debater_conversation_history[0])
-            judge_conversation_history.append({"role": "user", "content": final_prompt+summary_of_debate})
-            responses = client.chat.completions.create(
-                messages=judge_conversation_history,
-                model=model_name,
-            )
-            final_predict = responses.choices[0].message.content
-            judge_conversation_history.append({"role": "system", "content": final_predict})
-            # print("Judge history:", judge_conversation_history)
-        self.Outputs[idx] = final_predict
+        args = self.args
+        output = Path(args.output or f"Output/{args.task}_{args.method}_{args.split}.jsonl")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        config = {key: value for key, value in vars(args).items() if key not in ("output", "resume", "workers", "limit")}
+        config["labels"] = self.labels
+        config["api_base"] = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        done = set()
+        if output.exists():
+            if not args.resume:
+                raise ValueError(f"Output already exists; choose another path or use --resume: {output}")
+            with output.open(encoding="utf-8") as f:
+                for line in f:
+                    record = json.loads(line)
+                    if record["config"] != config:
+                        raise ValueError("Cannot resume with a different experiment configuration")
+                    if record["status"] == "ok":
+                        done.add((record["id"], record["text_hash"]))
+        rows = [row for row in self.rows if (row["id"], hashlib.sha256(row["text"].encode()).hexdigest()) not in done]
+        failures = 0
+        with output.open("a", encoding="utf-8") as f, ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = {executor.submit(self.single_debate, row): row for row in rows}
+            for count, future in enumerate(as_completed(futures), 1):
+                row = futures[future]
+                try:
+                    record = future.result()
+                except Exception as error:
+                    failures += 1
+                    record = dict(row, status="error", error=str(error))
+                record.update(config=config, text_hash=hashlib.sha256(row["text"].encode()).hexdigest())
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                f.flush()
+                print(f"[{count}/{len(rows)}] case={row['id']} status={record['status']}")
+        print(f"Results saved to {output}; {failures} failures in this run. Use --resume to retry failed cases.")
 
 
-
-
-
-    def run_debate(self, model_name, method):
-        prediction = []
-        with ThreadPoolExecutor(max_workers=50) as executor:
-            futures_to_case = {executor.submit(self.single_debate, model_name, method,idx): idx for idx in range(len(self.case_background))}
-            with tqdm.tqdm(total=len(self.case_background)) as pbar:
-                for future in as_completed(futures_to_case):
-                    try:
-                        answer = future.result()
-                        if answer == True:
-                            prediction.append("Correct")
-                        else:
-                            prediction.append("Incorrect")
-                        index = futures_to_case[future]
-                        pbar.update(1)
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-        self.save(model_name, method)
-
-    def assistant_debate(self, model_name, method):
-        model_path = "assistant_model//trained_model.pt"
-        self.Assistant_LLM = True
-        # self.classifier = TextClassificationModel(model_path)
-        print("Assistant Model loaded successfully!")
-        self.run_single_debate(model_name, method)
-
-    def zeroshot(self, model_name, method):
-        prompt = (f"Here is a legal case, your task is to predict its relevant law article, the labels can be"
-                  f"one of the following: {self.Debater}. \n"
-                  f"These labels represent the Criminal Law of the People's Republic of China. \n"
-                  f"ONLY output the one of the labels without anything else.\n"
-                  f"Here is the case background:\n")
-
-        with ThreadPoolExecutor(max_workers=100) as executor:
-            futures_to_case = {executor.submit(self.model_request, model_name, prompt+self.case_background[idx], self.Labels[idx], idx): idx for idx in range(len(self.case_background))}
-            with tqdm.tqdm(total=len(self.Labels)) as pbar:
-                for future in as_completed(futures_to_case):
-                    try:
-                        answer = future.result()
-                        if answer == True:
-                            self.prediction.append("Correct")
-                        else:
-                            self.prediction.append("Incorrect")
-                        pbar.update(1)
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-        self.save(model_name, method)
-
-
-
-    def single_model_request(self, model_name, prompt):
-        # print("Prompt:", prompt)
-        client = OpenAI()
-        response = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": f"{prompt}"
-            }],
-            model=model_name,
-        )
-        return response.choices[0].message.content
-
-    def model_request(self, model_name, prompt, ground_truth, idx):
-        # print("Prompt:", prompt)
-        client = OpenAI()
-        response = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": f"{prompt}"
-            }],
-            model=model_name,
-        )
-        predict = response.choices[0].message.content
-        self.Outputs[idx] = predict
-        # print("Ground Truth:", ground_truth)
-        # print("Prediction:", predict)
-        if DEBUG:
-            print("Ground Truth:", ground_truth,".  Prediction:", predict)
-
-        if ground_truth == predict:
-            return True
-        return False
-        # return response.choices[0].message.content
-
-    def save(self, model_name, method):
-        file_name = f"Multi-Result/{self.task} & {method} & {model_name} & data{self.n}.txt"
-        with open(file_name, "w", encoding='utf-8') as f:
-            for label, predict in zip(self.Labels, self.Outputs):
-                str = f"{label}   {predict}"
-                f.write(str)
-                f.write("\n")
-        print("Prediction saved in prediction.txt")
-
+def main():
+    parser = argparse.ArgumentParser(description="Debate-Feedback legal judgment prediction")
+    parser.add_argument("--task", choices=["trial", "article", "crime"], default="trial")
+    parser.add_argument("--split", choices=["train", "valid", "test"], default="test")
+    parser.add_argument("--method", choices=["zeroshot", "debate-single", "debate-assistant"] + list(METHODS), default="zeroshot")
+    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--rounds", type=int, help="Number of rounds; required for debate methods")
+    parser.add_argument("--debaters", type=int, help="Number of experts; required for debate methods")
+    parser.add_argument("--smoothing", type=float, default=0.5)
+    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument("--temperature", type=float, default=0)
+    parser.add_argument("--assistant-model")
+    parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--limit", type=int, default=0, help="0 uses all samples")
+    parser.add_argument("--output")
+    parser.add_argument("--resume", action="store_true")
+    args = parser.parse_args()
+    args.method = METHODS.get(args.method, args.method)
+    if args.method != "zeroshot" and (args.rounds is None or args.debaters is None):
+        parser.error("Debate methods require --rounds and --debaters")
+    if ((args.rounds is not None and args.rounds < 1)
+            or (args.debaters is not None and args.debaters < 2)
+            or args.workers < 1 or args.limit < 0):
+        parser.error("rounds/workers must be positive, debaters at least 2, and limit nonnegative")
+    if not 0 <= args.smoothing <= 1 or not 0 <= args.threshold <= 1:
+        parser.error("smoothing and threshold must be in [0, 1]")
+    if args.method == "debate-assistant" and not args.assistant_model:
+        parser.error("debate-assistant requires --assistant-model")
+    AdversarialAI(args).run()
 
 
 if __name__ == "__main__":
-    dataset_path = "data/ceil2018/article_test.json"
-    model_name = "gpt-4o-mini"
-    method = "zeroshot"
-    task = "article-prediction"
-    print("Dataset loading..., predict method is:", method, ", model name is:", model_name, ", dataset path is:",
-          dataset_path)
-    adversarial_ai = AdversarialAI(dataset_path, method, model_name, task)
-    adversarial_ai.read_dataset()
-    adversarial_ai.run()
-
+    main()

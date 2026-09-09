@@ -17,13 +17,6 @@ def read_jsonl(path):
     return data
 
 
-# generate_prompt_path = "../PromptSet/Generate_Summary.txt"
-# test_path = "../PromptSet/test.txt"
-# with open(generate_prompt_path, "r") as f:
-#     generate_prompt = f.read()
-# with open(test_path, "r") as f:
-#     test = f.read()
-# print("####################################################")
 
 def call_openai_api(case_description):
     prompt = (
