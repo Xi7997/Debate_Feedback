@@ -95,12 +95,4 @@ python Multi_Classification.py --task trial --method zeroshot --model gpt-4o \
   --output Output/trial_gpt4o.jsonl
 ```
 
-Model names must be supported by your API service. For article prediction, use `--task article` and separate output paths.
 
-## Offline checks
-
-These tests do not call the API or download model weights:
-
-```bash
-python -B -m unittest discover -s tests -v
-```
